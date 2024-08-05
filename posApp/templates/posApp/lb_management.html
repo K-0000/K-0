@@ -1,0 +1,95 @@
+{% extends "posApp/base.html" %} {% block pageContent %}{% csrf_token %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Pound Management</h4>
+        </div>
+    </div>
+</div>
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <form method="POST" action="{% url 'pound' %}">
+                {% csrf_token %}
+                <div class="mdc-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">Excess Management</h4>
+                    </div>
+                    {{ Mixed1}}
+                    <br>
+                <button>SUBMIT</button>
+                </div>
+            </form>
+        </div>
+        <div class="mdc-card">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <colgroup>
+                        <col width="5%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="25%">
+                        <col width="15%">
+                        <col width="15%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="text-center py-1">Date</th>
+                            <th class="text-center py-1">Product</th>
+                            <th class="text-center py-1">Pound</th>
+                            <th class="text-center py-1">Commant</th>
+                            <th class="text-center py-1">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr>
+                            <td class="px-2 py-1 text-center">{{ stock.date_created}}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.product}}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.lb}}</td>
+                            <td class="px-2 py-1 text-center">{{ stock.comment}}</td>
+                            <td class="px-2 py-1 text-center">
+                                {% if stock.type == 1 %}<span class="badge bg-primary rounded-pill px-3">Excess</span>
+                                {% else%}<span class="badge bg-secondary rounded-pill px-3">Require</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <colgroup>
+                    <col width="5%">
+                    <col width="20%">
+                    <col width="20%">
+                    <col width="25%">
+                    <col width="15%">
+                    <col width="15%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th class="text-center py-1">Product</th>
+                        <th class="text-center py-1">Avalible</th>
+                        <th class="text-center py-1">IN</th>
+                        <th class="text-center py-1">OUT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for product in products %}
+                <tr>
+                    <td class="px-2 py-1 text-center">{{ product.name}}</td>
+                    <td class="px-2 py-1 text-center">{{ product.lb_avali}}</td>
+                    <td class="px-2 py-1 text-center">{{ product.lb_in}}</td>
+                    <td class="px-2 py-1 text-center">{{ product.lb_out}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+</div>
+{% endblock pageContent %} {% block ScriptBlock %}
+<script>
+</script>
+{% endblock ScriptBlock %}

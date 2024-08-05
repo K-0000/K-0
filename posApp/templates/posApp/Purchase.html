@@ -1,0 +1,359 @@
+{% extends "posApp/base.html" %} {% block pageContent %}
+{% load static %}
+
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="card-title mb-0">Point of Sales</h4>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12" name="product_grid" id="product_grid">
+    <div class="mdc-card py-3" style="max-height:70vh; overflow-y:scroll">
+        <input type="search" class="form-control rounded" placeholder="Search for Product..." aria-label="Search" aria-describedby="search-addon" name="filter_search_product" id="filter_search_product" style="margin-bottom: 1.5rem; width: auto;"></input>
+        <ul style="display:grid; margin:0; padding:0; list-style: none; gap:1.5rem; grid-template-columns: repeat(4, 1fr)" name="product_list" id="product_list">
+            {% for product in products %}
+                <li style="outline: 1px; outline-style: solid; border-radius: 25px; overflow: hidden; background-color: #3e4b5b; max-height: 35vh;" >
+                    <div style="display: flex; flex-direction: column;">
+                        <h5 class="text-center text-light bg-primary" style=" padding-top: 0.5ch; margin-bottom: 0; text-overflow: ellipsis;" name="product_name" id="product_name">{{product}}</h5>
+                        <h6 class="text-center text-light bg-primary" style="padding-bottom: 0.5ch; margin-bottom: 0; font-variant: small-caps; font-weight: 400;">Amt: {{product.count_inventory}}</h6>
+                        <!--img class="bg-light" src="{% static 'posApp/assets/own/logo_transparent.png' %}" style="width:100%; max-height: 20vh; object-fit: none; outline: 2px; border-style: ridge; border-color: #3e4b5b"/-->
+                        <img class="bg-light" src="{{product.product_image}}" style="width:100%; max-height: 15vh; object-fit: scale-down; outline: 2px; border-style: ridge; border-color: #3e4b5b"/>
+                        <div style="display: flex; justify-content: space-around;">
+                            <input type="hidden" class="id-field" value="{{ product.pk }}"/>
+                            <div style="display:flex; flex-direction: column; border-style: ridge groove ridge groove; border-color:#3e4b5b; background-color: white">
+                                <label for="product-quantity" style="border-style: ridge groove ridge groove; border-color:white; background-color: white;">Qty</label>
+                                <input type="number" class="quantity-field form-control form-control-sm text-center" step="any" name="product-quantity" value="1">
+                            </div>
+                            <div style="display:flex; flex-direction: column; border-style: groove; border-color:#3e4b5b; background-color: white">
+                                <label for="product-price" style="border-style: groove; border-color:white; background-color: white">Price</label>
+                                <input type="number" class="price-field form-control form-control-sm text-center" step="any" name="product-price" value="0">
+                            </div>
+                        </div>
+                        <button class="button-product btn btn-primary bg-gradient btn-sm rounded-0"><i class="mdi mdi-plus"></i><span>Add Product</span></button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+
+        <form action="" id="pos-form">
+            <div class="row">
+                <fieldset>
+                    <div class="d-flex" id="POS-field" style="height:auto;">
+                        <div class="col-8 bg-gradient bg-light">
+                            <table class="table table-bordered">
+                                <colgroup>
+                                    <col width="5%">
+                                    <col width="15%">
+                                    <col width="40%">
+                                    <col width="20%">
+                                    <col width="20%">
+                                </colgroup>
+                                <thead>
+                                    <tr class="bg-dark bg-gradient bg-opacity-50 text-light">
+                                        <th class="py-1 px-2 text-center  text-light"></th>
+                                        <th class="py-1 px-2 text-center  text-light">QTY</th>
+                                        <th class="py-1 px-2 text-center  text-light">Product</th>
+                                        <th class="py-1 px-2 text-center  text-light">Price</th>
+                                        <th class="py-1 px-2 text-center  text-light">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-4 bg-gradient bg-dark bg-opacity-50">
+                            <div class="col-12 py-4 px-2">
+                                <dl>
+                                    <dt class="h4 fw-bold text-light">Vendors</dt>
+                                    <dd class="text-start py-1 px-2 rounded-0 bg-light">
+                                        <select name="customer_id" id="customer_id" class="form-select form-select-sm">
+                                            <option value="" disabled selected></option>
+                                            {% for Customer in Customers %}
+                                            <option value="{{ Customer.pk }}">{{ Customer }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </dd>
+									<dt class="h4 fw-bold text-light">Payment Method</dt>
+                                    <dd><select name="sale_type" class="form-select form-select-sm">
+                                            <option value="" disabled selected></option>
+                                            <option value="1">Debit</option>
+                                            <option value="2">Credit</option>
+                                            <option value="3">Prepaid</option>
+                                        </select></dd>
+                                    <dt class="h4 fw-bold text-light">Sub Total</dt>
+                                    <dd class="text-end py-1 px-2 rounded-0 bg-light">
+                                        <input type="hidden" name="sub_total" value="0">
+                                        <span class="h3 fw-bold" id="sub_total">0.00</span>
+                                    </dd>
+                                    <dt class="h4 fw-bold text-light">Grand Total</dt>
+                                    <dd class="text-end py-1 px-2 rounded-0 bg-light">
+                                        <input type="hidden" name="grand_total" value="0">
+                                        <input type="hidden" name="tendered_amount" value="0">
+                                        <input type="hidden" name="amount_change" value="0">
+                                        <input type="hidden" name="grand_total" value="0">
+                                        <input type="hidden" name="grand_total" value="0">
+                                        <span class="h3 fw-bold" id="grand_total">0.00</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="row">
+                <div class="col-md-12 text-end">
+                    <button class="btn btn-primary btn-sm rounded-0" type="button" id="check_out"><i class="mdi mdi-save"></i> Checkout</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<noscript id="item-clone">
+    <tr>
+        <td class="px-2 py-1 text-center">
+            <button class="btn btn-sm btn-outline-danger rounded-0 rem-item" type="button"><i class="mdi mdi-close"></i></button>
+        </td>
+        <td class="px-2 py-1">
+            <input type="hidden" name="product_id[]">
+            <input type="hidden" name="price[]">
+            <input type="number" name="qty[]" min="0" class="form-control form-control-sm rounded-0 text-center">
+        </td>
+        <td class="px-2 py-1 product_name text-start"></td>
+        <td class="px-2 py-1 product_price text-end"></td>
+        <td class="px-2 py-1 product_total text-end"></td>
+    </tr>
+</noscript> {% endblock pageContent %} {% block ScriptBlock %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<script>
+    var product_json = '{{ product_json }}'
+    if (product_json == "" || product_json == "{}") {
+        product_json = {}
+    } else {
+        product_json = product_json.replaceAll('&quot;', '"')
+        product_json = $.parseJSON(product_json)
+    }
+    var prod_arr = {}
+    if (Object.keys(product_json).length > 0) {
+        Object.keys(product_json).map(k => {
+            prod_arr[product_json[k].id] = product_json[k]
+        })
+    }
+
+    function calc() {
+        var sub_total = 0;
+        var grand_total = 0;
+        $('#POS-field table tbody tr').each(function() {
+            price = $(this).find('[name="price[]"]').val()
+            qty = $(this).find('[name="qty[]"]').val()
+            qty = qty > 0 ? qty : 0
+            total = parseFloat(price) * parseFloat(qty)
+            $(this).find('.product_total').text(parseFloat(total).toLocaleString('en-US'))
+            sub_total += parseFloat(total)
+        })
+        tax = $('[name="tax"]').val()
+        tax = tax / 100;
+        sale_type= $('[name="sale_type"]').val()
+        customer_id= $('[name="customer_id"]').val()
+        var grand_total = parseFloat(sub_total)
+        $('#grand_total').text(parseFloat(sub_total).toLocaleString('en-US'))
+        $('[name="grand_total"]').val(parseFloat(sub_total))
+        $('#sub_total').text(parseFloat(sub_total).toLocaleString('en-US'))
+        $('[name="sub_total"]').val(parseFloat(sub_total))
+
+    }
+    $(function() {
+        /*
+        $('#product-id').select2({
+            placeholder: "Please Select Product here",
+            width: '100%'
+        })
+        $('#add_item').click(function() {
+            var id = $('#product-id').val()
+            var qty = $('#product-qty').val()
+            var price = $('#product-price').val()
+            console.log(id, qty)
+            if (id == '' || qty == '' || id == null || qty == null) {
+                alert("Product and Quantity Field is required!")
+                return false
+            }
+            if (!!prod_arr[id]) {
+                if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
+                    alert('Item Already in the List.')
+                    return false;
+                }
+                data = prod_arr[id]
+                var tr = $($('noscript#item-clone').html()).clone()
+                tr.find('[name="qty[]"]').val(qty)
+                tr.find('[name="product_id[]"]').val(id)
+                tr.find('[name="price[]"]').val(data.price)
+                tr.find('.product_name').text(data.name)
+                if(price>0){
+                tr.find('[name="price[]"]').val(price)
+                tr.find('.product_price').text(parseFloat(price).toLocaleString('en-US'))
+                tr.find('.product_total').text(parseFloat(price * qty).toLocaleString('en-US'))
+                }
+                tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'))
+                tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'))
+                $('#POS-field table tbody').append(tr)
+                $('#product-id').val('').trigger('change')
+                $('#product-qty').val(1)
+                calc()
+                tr.find('[name="qty[]"]').on('input keypress keyup keydown', function() {
+                    calc()
+                })
+                tr.find('.rem-item').click(function() {
+                    if (confirm("Are you sure to remove " + data.name + " product form list?") == true) {
+                        tr.remove()
+                        calc()
+                    }
+                })
+            } else {
+                alert("Undefined Product");
+            }
+        })
+        */
+        $(function(){
+            $("#customer_id").select2({
+                theme: "bootstrap-5",// Required for dropdown styling
+
+            });
+        });
+
+        $(document).ready(function(){
+        $("#filter_search_product").on("keyup", function() {
+            let filter = $(this).val().toLowerCase();
+
+            $("#product_list li").each(function(){
+               let productTitle = $(this).find('#product_name').text().toLowerCase();
+
+               if(productTitle.indexOf(filter) > -1){
+                $(this).show();
+               }
+               else{
+                $(this).hide();
+               }
+            })
+
+
+            });
+        });
+        $('.button-product').click(function() {
+            let listItem = $(this).parent();
+            let id = listItem.find('.id-field').val()
+            let qty = listItem.find('.quantity-field').val()
+            let price = listItem.find('.price-field').val()
+            console.log(id, qty)
+            if (id == '' || qty == '' || id == null || qty == null) {
+                alert("Product and Quantity Field is required!")
+                return false
+            }
+            if (!!prod_arr[id]) {
+                if ($('#POS-field table tbody input[name="product_id[]"][value="' + id + '"]').length > 0) {
+                    alert('Item Already in the List.')
+                    return false;
+                }
+                data = prod_arr[id]
+                var tr = $($('noscript#item-clone').html()).clone()
+                tr.find('[name="qty[]"]').val(qty)
+                tr.find('[name="product_id[]"]').val(id)
+                tr.find('[name="price[]"]').val(data.price)
+                tr.find('.product_name').text(data.name)
+                if(price>0){
+                tr.find('[name="price[]"]').val(price)
+                tr.find('.product_price').text(parseFloat(price).toLocaleString('en-US'))
+                tr.find('.product_total').text(parseFloat(price * qty).toLocaleString('en-US'))
+                }
+                tr.find('.product_price').text(parseFloat(data.price).toLocaleString('en-US'))
+                tr.find('.product_total').text(parseFloat(data.price * qty).toLocaleString('en-US'))
+                $('#POS-field table tbody').append(tr)
+                $('#product-id').val('').trigger('change')
+                $('#product-qty').val(1)
+                calc()
+                tr.find('[name="qty[]"]').on('input keypress keyup keydown', function() {
+                    calc()
+                })
+                tr.find('.rem-item').click(function() {
+                    if (confirm("Are you sure to remove " + data.name + " product form list?") == true) {
+                        tr.remove()
+                        calc()
+                    }
+                })
+            } else {
+                alert("Undefined Product");
+            }
+        })
+        $('[name="tax"]').on('input keypress keydown keyup', function() {
+            calc()
+        })
+        $('#check_out').click(function() {
+            if ($('#POS-field table tbody tr').length <= 0) {
+                alert("Add atleast 1 product first!")
+                return false;
+            }
+            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
+        })
+        $('[name="tax"]').on('input keypress keydown keyup', function() {
+            calc()
+        })
+        $('#check_out').click(function() {
+            if ($('#POS-field table tbody tr').length <= 0) {
+                alert("Add atleast 1 product first!")
+                return false;
+            }
+            uni_modal("Checkout", "{% url 'checkout-modal' %}?grand_total=" + $('[name="grand_total"]').val())
+        })
+        $('#pos-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'save-purchase' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                            // location.reload()
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("An error occured", 'error');
+                        end_loader();
+                        console.err(resp)
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        })
+    })
+</script>
+{% endblock ScriptBlock %}

@@ -1,0 +1,422 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> {% if page_title %}
+    <title>{{ page_title }} | Grocery POS</title>
+    {% else %}
+    <title>Grocery POS</title>
+    {% endif %}
+    <link rel="stylesheet" href="{% static 'posApp/assets/bootstrap/css/bootstrap.min.css' %}">
+
+    <!-- plugins:css -->
+    <!--link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/mdi/css/materialdesignicons.min.css' %}"-->
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/css/vendor.bundle.base.css' %}">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/flag-icon-css/css/flag-icon.min.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/vendors/jvectormap/jquery-jvectormap.css' %}">
+    <!-- End plugin css for this page -->
+    <!-- Layout styles -->
+    <link rel="stylesheet" href="{% static 'posApp/assets/material-admin/css/demo/style.css' %}">
+    <link rel="stylesheet" href="{% static 'posApp/assets/select2/dist/css/select2.min.css' %}">
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"> -->
+    <link rel="stylesheet" href="{% static 'posApp/assets/default/css/style.css' %}">
+    <!-- End layout styles -->
+    <link rel="shortcut icon" href="{% static 'posApp/assets/material-admin/images/favicon.png' %}" />
+    <script src="{% static 'posApp/assets/default/js/jquery-3.6.0.min.js' %}">
+    </script>
+    <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'posApp/assets/bootstrap/js/popper.min.js' %}"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+    <script type="text/javascript" src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+    <!--script src=" https://cdn.jsdelivr.net/npm/sanitize-filename@1.6.3/index.min.js "></script-->
+    <script>
+        function inverse_table(table_to_sort){
+            let table_element = document.getElementsByName(table_to_sort)[0].querySelector("tbody");;
+            let arr = $.makeArray($("tr", table_element).detach());
+            arr.reverse();
+            $(table_element).append(arr);
+        }
+    </script>
+    <script>
+        function parse_datetime_into_numeric(date_to_check){
+            
+            let date_tmp = date_to_check
+            .replaceAll(",","")
+            .replaceAll(":","")
+            .replaceAll("\t","")
+            .replaceAll("-"," ")
+            .split(" ");
+            console.log(date_tmp);
+
+            const months = [
+                [1, "January"],
+                [2, "February"],
+                [3, "March"],
+                [4, "April"],
+                [5, "May"],
+                [6, "June"],
+                [7, "July"],
+                [8, "August"],
+                [9, "September"],
+                [10, "October"],
+                [11, "November"],
+                [12, "December"]
+            ]
+
+            let u_month = -1;
+            let u_day;
+            let u_year = 2;
+            let u_time = 3;
+            let u_ampm = 4;
+
+            for(const month_check of months){
+                //console.log(month_check)
+                if(u_month === -1){
+                    u_month = date_tmp.findIndex(entry => entry.includes(month_check[1]))
+                }
+                //console.log(u_month);
+            }
+            console.log(date_tmp[u_month])
+
+            for(const month_check of months){
+                date_tmp[u_month] == month_check[1] ? date_tmp[u_month] = month_check[0].toString() : date_tmp[u_month] = date_tmp[u_month]
+            }
+            date_tmp[u_month].length<2 ? date_tmp[u_month] = "0"+date_tmp[u_month] : date_tmp[u_month] = date_tmp[u_month]; 
+            //console.log(date_tmp[u_month]);
+
+            u_month == 0? u_day = 1 : u_day = 0;
+
+            /*
+            switch(date_tmp[u_month]){
+                case "January":
+                    date_tmp[u_month] = "01"
+                    break;
+                case "February":
+                    date_tmp[u_month] = "02"
+                    break;
+                case "March":
+                    date_tmp[u_month] = "03"
+                    break;
+                case "April":
+                    date_tmp[u_month] = "04"
+                    break;
+                case "May":
+                    date_tmp[u_month] = "05"
+                    break;
+                case "June": 
+                    date_tmp[0] = "06"
+                    break;
+                case "July": 
+                    date_tmp[0] = "07"
+                    break;
+                case "August": 
+                    date_tmp[0] = "08"
+                    break;
+                case "September": 
+                    date_tmp[0] = "09"
+                    break;
+                case "October": 
+                    date_tmp[0] = "10"
+                    break;
+                case "November": 
+                    date_tmp[0] = "11"
+                    break;
+                case "December": 
+                    date_tmp[0] = "12"
+                    break;
+                default:
+                    break;
+            }
+            */
+
+            // Date parsing to ensure it has a 0 if it is a one digit number
+            if(date_tmp[u_day].length < 2){
+                date_tmp[u_day] = "0"+date_tmp[u_day]
+            }
+
+            if(date_tmp.length > 3){
+                //time parsing as 24h
+                if(date_tmp[4] == "p.m."){
+                    //console.log(date_tmp[3]+date_tmp[4])
+                    time_tmp = parseInt(date_tmp[3])+1200
+                    //console.log(time_tmp)
+                    date_tmp[3] = time_tmp.toString();
+                }
+
+            }
+            
+            else{
+                date_tmp.push("0000")
+            }
+
+            let parsed_time =
+                    date_tmp[2]+//year
+                    date_tmp[0]+//month
+                    date_tmp[1]+//day
+                    date_tmp[3]//time
+
+            parsed_time *= 10000 //arbitrarily large number so any database entry created on the same minute does not share a key in a map
+            console.log(parsed_time);
+            //console.log(parseInt(parsed_time));
+            //console.log(date_tmp);
+                        
+            return parseInt(parsed_time);
+
+        }
+    </script>
+    <script>
+        function sort_table_by_date_inner(table_to_sort, date_key){
+            
+            console.log(table_to_sort)
+            
+            let rows = table_to_sort.getElementsByTagName("tbody")[0].rows;
+            console.log(rows[0].getElementsByTagName('td')[0].innerText+"row row row your boat");
+            //console.log(parse_datetime_into_numeric(rows[6].getElementsByTagName('td')[date_key].innerText));
+            let date_indexes = [];
+
+            //console.log(table_to_sort.getElementsByTagName('thead')[0].rows[0].getElementsByTagName('th'))
+            //console.log(table_to_sort.getElementsByTagName('tbody')[0].rows[0].getElementsByTagName('td'))
+            let x = table_to_sort.getElementsByTagName('thead')[0].rows[0].getElementsByTagName('th')[0]
+            console.log(x);
+
+            if(x.classList.contains("blank")){ // Specfically to check if it's generated in the back end which is built differently with a weird blank column for some reason
+                date_key -= 1;
+            }
+
+            for (const row of rows){
+                let date_index = parse_datetime_into_numeric(row.getElementsByTagName('td')[date_key].innerText);
+                console.log("date_index"+date_index);
+                date_indexes.push(date_index);
+            }
+            
+            let unsorted_table = new Map(); 
+
+            for(let i = 0; i < rows.length; i++){
+                console.log(i)
+
+                mapped_index = date_indexes[i];
+                mapped_row = rows[i];
+
+                if(i>0){
+                    while(unsorted_table.has(mapped_index)){
+                        mapped_index++; //avoiding key overlap
+                    }
+                }
+
+                unsorted_table.set(mapped_index,mapped_row);
+            }
+
+            console.log(unsorted_table);
+
+            let sorted_table = new Map([...unsorted_table.entries()].sort().reverse());
+
+            console.log(sorted_table);
+
+            let sorted_table_index = Array.from(sorted_table.keys())
+            console.log(sorted_table_index)
+
+            let sorted_table_HTML = [];
+            for(let i of sorted_table){
+                sorted_table_HTML.push(i[1]);
+            }
+            console.log(sorted_table_HTML);
+
+
+            let table_body_sorted = table_to_sort
+            while(table_body_sorted.getElementsByTagName("tbody")[0].hasChildNodes()){
+                table_body_sorted.getElementsByTagName("tbody")[0].removeChild(table_body_sorted.getElementsByTagName("tbody")[0].firstChild);
+            }
+
+            sorted_table_HTML.forEach(element => table_body_sorted.getElementsByTagName("tbody")[0].append(element));
+            console.log(table_body_sorted);
+
+            
+            //console.log(rows, date_indexes)
+
+            /*while(switching){
+            
+            }*/
+        }
+    </script>
+    <script>
+        function sort_table_by_date(table_name, key_override){
+            
+            let sort_table_key = key_override;
+
+            sort_table = document.getElementsByName(table_name)[0];
+            console.log(sort_table);
+            let table_headings_HTML = sort_table.getElementsByTagName("thead")[0].rows[0].getElementsByTagName("th")
+            let table_headings = [];
+
+            for(heading of table_headings_HTML){
+                table_headings.push(heading.innerText.toLowerCase())
+            }
+
+            if(key_override === undefined){
+                //let sort_table_key = table_headings.indexOf("date"); console.log(sort_table_key);
+                sort_table_key = table_headings.findIndex(entry => entry.includes("date")); console.log(sort_table_key);
+                console.log(table_headings[0]+"is a field")
+                console.log(table_headings);
+            }
+            
+            
+
+            sort_table_by_date_inner(sort_table, sort_table_key);
+        }
+    </script>
+    <style>
+        .table-limited{
+            max-height : calc(100vh/3) !important;
+            overflow-y: scroll;
+        }
+        .table-larger{
+            max-height : calc(50vh + 5ch) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="{% static 'posApp/assets/material-admin/js/preloader.js' %}"></script>
+    <div class="body-wrapper">
+        <!-- Aside -->
+        {% block navigation %} {% include "posApp/navigation.html" %} {% endblock navigation %}
+        <!-- Aside -->
+        <div class="main-wrapper mdc-drawer-app-content">
+            <!-- Top Navigation -->
+            {% block topNavigation %} {% include "posApp/topNavigation.html" %} {% endblock topNavigation %}
+            <!-- Top Navigation -->
+
+            <div class="page-wrapper mdc-toolbar-fixed-adjust">
+                <main class="content-wrapper">
+                    <!-- Message -->
+                    {% if messages %}
+                    <div class="mdc-layout-grid py-1">
+                        <div class="mdc-layout-grid__inner">
+                            {% for message in messages %}
+                            <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+                                <div class="alert alert-{{message.tags}} w-100 rounded-0 mb-0">
+                                    <div class="d-flex w-100">
+                                        <div class="col-auto flex-shrink-1 flex-grow-1">{{ message }}</div>
+                                        <div class="col-auto text-center">
+                                            <button class="btn-close btn-sm text-sm" type="button" onclick="$(this).closest('.alert').remove()"></button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- Message -->
+                    <div class="mdc-layout-grid">
+                        <div class="mdc-layout-grid__inner">
+                            {% block pageContent %} {% endblock pageContent %}
+                        </div>
+                    </div>
+                </main>
+                <!-- partial:partials/_footer.html -->
+                <footer>
+                    <div class="mdc-layout-grid">
+                        <div class="mdc-layout-grid__inner">
+                            <div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-6-desktop">
+                                <span class="text-center text-sm-left d-block d-sm-inline-block tx-14">Copyright © BT</span>
+                        </div>
+                    </div>
+                </footer>
+                <!-- partial -->
+            </div>
+        </div>
+    </div>
+    {% block ScriptBlock %} {% endblock ScriptBlock %}
+    <div class="modal fade" id="uni_modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn  btn-sm btn-flat btn-primary rounded-0" id='submit' onclick="$('#uni_modal form').submit()">Save</button>
+                    <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="confirm_modal" role='dialog'>
+        <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmation</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="delete_content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-flat btn-primary rounded-0" id='confirm' onclick="">Continue</button>
+                    <button type="button" class="btn btn-sm btn-flat btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.start_loader = function() {
+            $('body').removeClass('loaded')
+        }
+        window.end_loader = function() {
+            $('body').addClass('loaded')
+        }
+        window.uni_modal = function($title = '', $url = '', $size = "") {
+            start_loader()
+            $.ajax({
+                url: $url,
+                error: err => {
+                    console.log()
+                    alert("An error occured")
+                },
+                success: function(resp) {
+                    if (resp) {
+                        $('#uni_modal .modal-title').html($title)
+                        $('#uni_modal .modal-body').html(resp)
+                        if ($size != '') {
+                            $('#uni_modal .modal-dialog').addClass($size + '  modal-dialog-centered')
+                        } else {
+                            $('#uni_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered")
+                        }
+                        $('#uni_modal').modal({
+                            backdrop: 'static',
+                            keyboard: false,
+                            focus: true
+                        })
+                        $('#uni_modal').modal('show')
+                        end_loader()
+                    }
+                }
+            })
+        }
+        window._conf = function($msg = '', $func = '', $params = []) {
+            $('#confirm_modal #confirm').attr('onclick', $func + "(" + $params.join(',') + ")")
+            $('#confirm_modal .modal-body').html($msg)
+            $('#confirm_modal').modal('show')
+        }
+        $(function() {
+
+        })
+    </script>
+
+    <script src="{% static 'posApp/assets/material-admin/vendors/js/vendor.bundle.base.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/material.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/misc.js' %}"></script>
+    <script src="{% static 'posApp/assets/material-admin/js/dashboard.js' %}"></script>
+    <script src="{% static 'posApp/assets/select2/dist/js/select2.full.js' %}"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> -->
+</body>
+
+</html>

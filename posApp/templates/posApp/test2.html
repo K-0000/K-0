@@ -1,0 +1,158 @@
+<!--This is where all spare styles go-->
+
+<!--Logo Style-->
+<img src='{% static "posApp/assets/own/logo_part_transparent.png" %}' class="img-fluid"> <!--Has white in the circle, but none around it-->
+<img src='{% static "posApp/assets/own/logo_transparent.png" %}' class="img-fluid"> <!--All white removed-->
+<img src='{% static "posApp/assets/own/logo.png" %}' class="img-fluid"> <!--Has uncropped white surrounding the image-->
+<img src='{% static "posApp/assets/own/logo_transparent.png" %}' class="img-fluid"> <!--Part transparent but with the BT text filled, not a big fan-->
+
+
+
+
+<!--Navigation drawer style--> 
+<!--Logo inline with text; logo may be a bit small-->
+<div class="d-flex justify-content-center align-items-center">
+    <div class="col-3">
+        <img src='{% static "posApp/assets/own/logo_part_transparent.png" %}' class="img-fluid me-1 pe-1">
+    </div>
+    <div class="d-flex justify-content-center align-items-center">
+        <h3 class="text-center text-light">Grocery POS</h3>
+    </div>
+</div>
+
+<!--Logo above text, logo may be a bit large and interrupt the navbox -->
+<div class="container">
+    <div class="d-flex justify-content-center">
+        <img src='{% static "posApp/assets/own/logo_part_transparent.png" %}' class="img-fluid" style="max-width:60%;">
+    </div>
+    <div class="col">
+        <h3 class="text-center text-light">Grocery POS</h3>
+    </div>
+</div>
+
+
+
+
+<!-- Receipt styles-->
+<!--logo above text-->
+<div class="container justify-content-center lh1">
+    <div class="row justify-content-center">
+        <!--Change max width to another % if it seems a little awkward, margin may also be adjusted -->
+        <img src='{% static "posApp/assets/own/logo_part_transparent.png" %}' class="img-fluid" style="max-width: 30%; margin-bottom: 3%;"> 
+    </div>
+    <div class="row">
+        <center><small class="fw-bold">Grocery POS</small></center>
+    </div>
+    <div class="row">
+        <center><small class="fw-bold">Unofficial Receipt</small></center>
+    </div>
+</div>
+
+<!--Logo side of text, looks a bit awkward-->
+<div class="d-flex justify-content-center align-items-center">
+    <div class="col-3 justify-content-center">
+        <div class="row justify-content-center">
+            <!--Change max width to another % if it seems a little awkward, margin may also be adjusted-->
+            <img src='{% static "posApp/assets/own/logo_part_transparent.png" %}' class="img-fluid" style="max-width: 80%;"> 
+        </div>
+    </div>
+    <div class="col-6 justify-content-center">
+        <div class="row">
+            <center><small class="fw-bold">Grocery POS</small></center>
+        </div>
+        <div class="row">
+            <center><small class="fw-bold">Unofficial Receipt</small></center>
+        </div>
+    </div>
+</div>
+
+<scrip>
+    //### Purchasebook Section
+
+    @login_required
+    def purchasebook(request):
+        pb_list = Purchasebook.objects.all()
+        vv = Vendors.objects.all()
+        context = {
+            'page_title': 'Purchasebook',
+            'pbs': pb_list,
+            'vendors':vv
+        }
+        return render(request, 'posApp/purchasebook.html', context)
+    
+    @login_required
+    def manage_purchasebook(request):
+    
+        cashflow_cases = {cashflow_case.valInt() : str(cashflow_case) for cashflow_case in CB_CF}
+        transaction_cases = {transaction_case.valInt(): str(transaction_case) for transaction_case in CB_T}
+    
+        ussrs = Vendors.objects.all()
+        casg = Cashcats.objects.all()
+        cash_list = {}
+        if request.method == 'GET':
+            data = request.GET
+            id = ''
+            if 'id' in data:
+                id = data['id']
+            if id.isnumeric() and int(id) > 0:
+                cash_list = Purchasebook.objects.filter(id=id).first()
+    
+        #print(cashflow_cases)
+        #print(transaction_cases)
+         
+        context = {
+            'current_time': timezone.now,
+            'purchasebook': cash_list,
+            'cashflow_cases': cashflow_cases,
+            'transaction_cases': transaction_cases,
+            'users':ussrs,
+            'Cashcats':casg
+        }
+        return render(request, 'posApp/manage_purchasebook.html', context)
+    
+    @login_required
+    def Save_purchasebook(request):
+        data = request.POST
+        print(data)
+        resp = {'status': 'failed'}
+        try:
+            if (data['id']).isnumeric() and int(data['id']) > 0:
+                uuu = Customer.objects.filter(id=data['customer_id']).first()
+                ccc = Cashcats.objects.filter(id=data['cass_id']).first()
+                save_purchasebook = Purchasebook.objects.filter(id=data['id']).update(username=uuu,cashty=ccc,payment=data['name-payment'],
+                                                                            ammount=data['amount'],
+                                                                            descri=data['description'],
+                                                                            ct=data['cashflow'],
+                                                                            tr=data['transaction']
+                                                                            )
+            else:
+                uuu = Customer.objects.filter(id=data['customer_id']).first()
+                ccc = Cashcats.objects.filter(id=data['cass_id']).first()
+                save_purchasebook = Purchasebook(username=uuu,cashty=ccc,payment=data['name-payment'],
+                                                ammount=data['amount'],
+                                                descri=data['description'],
+                                                ct=data['cashflow'],
+                                                tr=data['transaction']
+                                                )
+                save_purchasebook.save()
+    
+            resp['status'] = 'success'
+            messages.success(request, 'Stock Entry Successfully saved.')
+        except:
+            resp['status'] = 'failed'
+        return HttpResponse(json.dumps(resp), content_type="application/json")
+    
+    @login_required
+    def delete_purchasebook(request):
+        data = request.POST
+        resp = {'status': ''}
+        try:
+            Purchasebook.objects.filter(id=data['id']).delete()
+            resp['status'] = 'success'
+            messages.success(request, 'Category Successfully deleted.')
+        except:
+            resp['status'] = 'failed'
+        return HttpResponse(json.dumps(resp), content_type="application/json")
+    
+    ### End Purchasebook Section
+</script>

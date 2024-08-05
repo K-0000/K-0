@@ -1,0 +1,8 @@
+django
+pymysql
+flask
+pandas
+sqlalchemy
+requests
+pillow
+cryptography

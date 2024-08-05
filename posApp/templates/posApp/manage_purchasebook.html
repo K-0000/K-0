@@ -1,0 +1,129 @@
+
+<div class="container-fluid">
+    <form action="" id="purchasebook-form">
+        <input type="hidden" id="id" name="id" value="{% if purchasebook.pk %}{{purchasebook.pk}}{% endif %}">
+        <div class="form-group mb-3">
+            <label for="date" class="control-label">Date</label>
+            <!--<input type="datetime-local" name="date" id="date" class="form-control form-control-sm rounded-0" value="{% if stocks.date %}{{stocks.date}}{% endif %}" required>-->
+            {% if purchasebook.date_created %}
+            <input type="text" class="form-control form-control-sm rounded-0" value = "{{purchasebook.date_created}}"readonly>
+            {% else %}
+            <input type="text" class="form-control form-control-sm rounded-0" value = "{{current_time}}" readonly>
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            <label for="vendor_id" class="control-label">Vendor</label>
+            <select name="vendor_id" id="vendor_id" class="form-select form-select-sm rounded-0" required>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="cass_id" class="control-label">Transaction reason</label>
+            <select name="cass_id" id="cass_id" class="form-select form-select-sm rounded-0" required>
+                {% for Cashcat in Cashcats %}
+                <option value="{{ Cashcat.id }}">{{ Cashcat.cashcatg }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="name-payment" class="control-label">Name</label>
+            <input type="text" class="form-control form-control-sm rounded-0" name="name-payment" id="name-payment" value = "{% if purchasebook.payment %}{{purchasebook.payment}}{%endif%}" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="amount" class="control-label">Amount</label>
+            <input type="number" class="form-control rounded-0" name="amount" id="amount" min="0" value="{%if purchasebook.ammount%}{{purchasebook.ammount}}{%else%}0{%endif%}" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="description" class="control-label">Description</label>
+            <textarea rows="2" name="description" id="description" class="form-control form-control-sm rounded-0" required>{% if purchasebook.descri %}{{purchasebook.descri}}{% endif %}</textarea>              
+        <div class="form-group mb-3">
+            <label for="cashflow" class="control-label">Cashflow</label>
+            <select name="cashflow" id="cashflow" class="form-select form-select-sm rounded-0" required>
+                {% if not purchasebook.ct %}
+                <option value="" disabled selected></option>
+                {% else %}
+                <option value="" disabled></option>
+                {% endif %}
+
+                {% for key, value in cashflow_cases.items %}
+                    {% if key == purchasebook.ct %}
+                        <option value="{{ key }}" selected> {{ value }} </option>
+                    {% else %}
+                        <option value="{{ key }}">{{ value }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="transaction" class="control-label">Transaction</label>
+            <select name="transaction" id="OS" class="form-select form-select-sm rounded-0" required>
+                {% if not purchasebook.tr %}
+                <option value="" disabled selected></option>
+                {% else %}
+                <option value="" disabled></option>
+                {% endif %}
+
+                {% for key, value in transaction_cases.items %}
+                    {% if key == purchasebook.tr %}
+                        <option value="{{ key }}" selected> {{ value }} </option>
+                    {% else %}
+                        <option value="{{ key }}">{{ value }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+<script>
+    $(function() {
+        $('#purchasebook-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            console.log(_this)
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'save_purchasebook' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    end_loader();
+                },
+                success: function(resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                        location.reload()
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("An error occured", 'error');
+                        end_loader();
+
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        })
+    })
+</script>

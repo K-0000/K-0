@@ -1,0 +1,359 @@
+import sweetify
+import textwrap
+from datetime import datetime , timedelta
+from dateutil.relativedelta import relativedelta
+
+
+#new
+from skimage import measure, filters, morphology
+from scipy import ndimage as ndi
+
+print(f'(views.py) imports successful')
+#print(f'(views.py) !!Important {models.AIModel.objects.first().model_location.path + "Ooo" + models.AIModel.objects>
+
+
+@@ -909,19 +916,31 @@ def AIscan(bimg_id, scanned_image, scanned_image2,scanned_image3,scanned_image4,
+        contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        total = len(contours)
+        pbar = tqdm(total)
+
+        masko = np.zeros_like(img2, dtype=np.uint8)
+        print("[INFO] classifying image...")
+        for cnt in contours:
+            counter += 1
+            x, y, w, h = cv2.boundingRect(cnt)
+            if x > 0 and y > 0 and x + w < img2.shape[1] and y + h < img2.shape[0]:
+                cv2.drawContours(masko, [cnt], 0, (255, 255, 255), thickness=cv2.FILLED)
+            x, y, w, h = x - 10, y - 10, w + 20, h + 20
+            roi = img2[y:y + h, x:x + w]
+            roi2 = img3[y:y + h, x:x + w]
+            area = cv2.contourArea(cnt)
+            length, width, roi = findlength(cnt, roi)
+            id = filter(length, hl, lm, area, width)
+            print(id)
+            if (id == "Double"):
+                pass
+                area = cv2.contourArea(cnt)
+                #total_arsb += area
+                #output = roi
+                #minEllipse = ovalmasking(cnt)
+                #color = (0, 0, 0)
+                #test = touchedgrain(img3, "Touched grain", length, x, y, w, h)
+                # cv2.ellipse(img2, minEllipse, color, -1)
+                #x, y, w, h = cv2.boundingRect(cnt)
+                #cv2.rectangle(img2, (x, y), (x + w, y + h), (0, 0, 0), -1)
+                #pass
+            #counts = {}
+            #for i in cnt:
+                #counts[k] = counts.get(k, 0) + 1
+
+
+@@ -950,8 +969,7 @@ def AIscan(bimg_id, scanned_image, scanned_image2,scanned_image3,scanned_image4,
+                cv2.rectangle(img2, (x, y), (x + w, y + h), (0, 0, 0), -1)
+            if (id == "Headrice"):
+                area = cv2.contourArea(cnt)
+                total_arh += area
+                count += 1
+
+                #total_avglen += length
+                #countavgl += 1
+                try:
+
+
+@@ -982,36 +1000,53 @@ def AIscan(bimg_id, scanned_image, scanned_image2,scanned_image3,scanned_image4,
+                GS = grainshape(length)
+
+                if (condition):
+                    masked_rotated_grain = mask(roi)
+                    print("fuck!!")
+                    #cv2.imshow("masked", masked_rotated_grain)
+                    #cv2.waitKey(0) 
+                    #cv2.destroyAllWindows()
+                    output = roi
+                    try:
+                        image1 = cv2.resize(roi, (224, 224))
+                        image = image1.astype("float") / 255.0
+                        image = img_to_array(image)
+                        image = np.expand_dims(image, axis=0)
+                        proba = model1.predict(image)[0]
+                        label = "OV"
+                    except Exception as e:
+                        label = "OV"
+                    if not np.any(masked_rotated_grain):
+                        print("masked_rotated_grain is entirely zero.")
+                    else:
+                        try:
+                            #image1 = cv2.resize(roi, (224, 224))
+                            image1 = cv2.resize(masked_rotated_grain, (224, 224))
+                            total_arh += area
+                            count += 1
+                            image = image1.astype("float") / 255.0
+                            image = img_to_array(image)
+                            image = np.expand_dims(image, axis=0)
+                            proba = model1.predict(image)[0]
+                            label = "OV"
+                        except Exception as e:
+                            label = "OV"
+                else:
+                    output1 = roi.copy()
+                    # label = resizing(roi,AI_MODEL,AI_LB)
+                    output1 = imagerotation(cnt, roi)
+                    try:
+                        # output = imutils.resize(output1, width=400)
+                        image1 = cv2.resize(roi, (224, 224))
+                        image = image1.astype("float") / 255.0
+                        image = img_to_array(image)
+                        image = np.expand_dims(image, axis=0)
+                        proba = model1.predict(image)[0]
+                        print(f'(views.py) (AIScan) proba = {proba} !!Imp')
+                        idx = np.argmax(proba)
+                        label = lb.classes_[idx]
+                        if (label=="G"):
+                            avglco += 1
+                            avgl+= length
+                    except Exception as e:
+                        print(f'(views.py)(AIScan) Exception Raised = {e}')
+                        label = "Na"
+                    rotated_grain = mask(roi)
+                    print("fuck!!")
+                    if not np.any(rotated_grain):
+                        print("masked_rotated_grain is entirely zero.")
+                    else:
+                        print("masked_rotated_grain has non-zero elements.")
+                        try:
+                            # output = imutils.resize(output1, width=400)
+                            #image1 = cv2.resize(roi, (224, 224))
+                            image1 = cv2.resize(rotated_grain, (224, 224))
+                            total_arh += area
+                            count += 1
+                            image = image1.astype("float") / 255.0
+                            image = img_to_array(image)
+                            image = np.expand_dims(image, axis=0)
+                            proba = model1.predict(image)[0]
+                            print(f'(views.py) (AIScan) proba = {proba} !!Imp')
+                            idx = np.argmax(proba)
+                            label = lb.classes_[idx]
+                            if (label=="G"):
+                                avglco += 1
+                                avgl+= length
+                        except Exception as e:
+                            print(f'(views.py)(AIScan) Exception Raised = {e}')
+                            label = "Na"
+
+                D = []
+                T = []
+
+
+@@ -1073,6 +1108,113 @@ def AIscan(bimg_id, scanned_image, scanned_image2,scanned_image3,scanned_image4,
+                labelx.append(label)
+            pbar.update(1)
+        pbar.close()
+        img2 = cv2.bitwise_and(img2, masko)
+        cv2.imwrite("jsh.png",img2)
+        if (count < total):
+            image_reshaped = img2.reshape((-1, 3))
+            image_reshaped = np.float32(image_reshaped)
+
+            # Define criteria and apply K-means clustering
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
+            k = 2  # Number of clusters (segments)
+            _, labels, centers = cv2.kmeans(image_reshaped, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            # Convert centers to 8-bit values
+            centers = np.uint8(centers)
+            segmented_image = centers[labels.flatten()]
+            segmented_image = segmented_image.reshape(img2.shape)
+
+            # Convert segmented image to grayscale and create binary mask
+            gray_segmented = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
+            binary_segmented = gray_segmented > filters.threshold_otsu(gray_segmented)
+            binary_segmented = binary_segmented.astype(np.uint8) * 255
+
+            # Perform connected component analysis
+            num_labels, labels_im = cv2.connectedComponents(binary_segmented)
+
+            # Process each labeled grain
+            grain_props = measure.regionprops(labels_im)
+            labeled_img2 = img2.copy()
+            for i, prop in enumerate(grain_props):
+                if prop.area > 50:
+                    min_row, min_col, max_row, max_col = prop.bbox
+                    rect = cv2.minAreaRect(np.array([[c[1], c[0]] for c in prop.coords]))
+                    box = cv2.boxPoints(rect)
+                    box = np.intp(box)
+                    length, width = findlength2(box)    
+                    imgg = img2[min_row:max_row, min_col:max_col]
+                    id = filter(length, hl, lm, prop.area, width)
+                    if (id == "Double"):
+                        cv2.rectangle(img3, (min_col, min_row), (max_col, max_row), (6 , 247, 244), 2)
+                        label_position = (min_col, min_row - 20)
+                        combined_label = f"{'Touched Grains'}-{length:.2f}"
+                        cv2.putText(img3, combined_label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                    if (id == "SB"):
+                        total_arsb += prop.area
+                        count += 1
+                        cv2.rectangle(img3, (min_col, min_row), (max_col, max_row), (0, 255, 0), 2)
+                        label_position = (min_col, min_row - 20)
+                        combined_label = f"{'SB'}-{length:.2f}"
+                        cv2.putText(img3, combined_label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                    if (id == "LB"):
+                        total_arlb += prop.area
+                        count += 1
+                        cv2.rectangle(img3, (min_col, min_row), (max_col, max_row), (255, 0, 0), 2)
+                        label_position = (min_col, min_row - 20)
+                        combined_label = f"{'LB'}-{length:.2f}"
+                        cv2.putText(img3, combined_label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+
+                    if (id == "Headrice"):
+                        if not np.any(rotated_grain):
+                            print("masked_rotated_grain is entirely zero.")
+                        else:
+                            print("masked_rotated_grain has non-zero elements.")
+                            try:
+                                shape = length / width
+                            except Exception as e:
+                                print(f'(views.py)(AIScan) Exception Raised = {e}')
+                            shape = 0
+                            l = ""
+                            if (shape >= 3.05):
+                                l = "slender"
+                            elif (shape <= 3.0 and shape >= 2.1):
+                                l = "medium"
+                            elif (shape < 2.1 and shape >= 1.1):
+                                l = "Bold"
+                            elif (shape <= 1.1):
+                                l = "Round"
+                            AR = l
+                            mod = str(tmp_model.rice_type)
+                            if (mod == "slender"):
+                                condition = shape < 3.06
+                            elif (mod == "medium"):
+                                condition = shape < 2.06 or shape > 3.05
+                            elif (mod == "bold"):
+                                condition = shape > 2.05 or shape < 1.1
+                            else:
+                                condition = shape > 1.1
+
+                            GS = grainshape(length)
+                            try:
+                                image1 = cv2.resize(imgg, (224, 224))
+                                image = image1.astype("float") / 255.0
+                                image = img_to_array(image)
+                                image = np.expand_dims(image, axis=0)
+                                proba = model1.predict(image)[0]
+                                print(f'(views.py) (AIScan) proba = {proba} !!Imp')
+                                idx = np.argmax(proba)
+                                label = lb.classes_[idx]
+                                if (label=="G"):
+                                    avglco += 1
+                                    avgl+= length
+                            except Exception as e:
+                                print(f'(views.py)(AIScan) Exception Raised = {e}')
+                                label = "Na"
+
+                            cv2.rectangle(img3, (min_col, min_row), (max_col, max_row), (0, 255, 0), 2)
+                            label_position = (min_col, min_row - 10)
+                            combined_label = f"{label}-{length:.2f}-{GS}"
+                            cv2.putText(img3, combined_label, label_position, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                
+        """
+        if (count < total):
+            img = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+
+@@ -1574,13 +1716,35 @@ def delete_all_pimage(request):
+            return JsonResponse({'message': 'Error'})
+
+
+def deactivate_expired_subscriptions(user1):
+    print("preparing")
+    today = timezone.now().date()
+    expired_subscriptions = Subscription.objects.filter(user=user1, end_date=today, is_active=True)
+    datecheck = Subscription.objects.filter(user=user1, is_active=True).first()
+    print("found it :", expired_subscriptions)
+    for subscription in expired_subscriptions:
+        subscription.is_active = False
+        subscription.save()
+        print("unchecked")
+    today = timezone.now().date()
+    if datecheck.end_date < today:
+        datecheck.is_active = False
+        datecheck.save()
+        print("unchecked")
+
+
+@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def subscription_status(request):
+    # Assuming the user is authenticated, get the current user
+    
+    user = request.user
+
+    #subscription =Subscription.objects.get(user=user)
+    #if subscription.DoesNotExist:
+    #    return Response({'message': "Lee", 'data': False, 'code':200})
+    #else:
+    deactivate_expired_subscriptions(user)
+    try:
+        # Assuming each user has only one subscription. You might need to modify this based on your actual model str>        
+        subscription =Subscription.objects.get(user=user)
+
+@@ -1593,7 +1757,7 @@ def subscription_status(request):
+            return Response({'message': "Lee", 'data': False, 'code':200})
+    except Subscription.DoesNotExist:
+        # User does not have a subscription, respond with a JSON indicating False
+        return Response({'subscription_status': False})
+        return Response({'message': "Lee", 'data': False, 'code':200})
+    except Exception as e:
+        # Handle other exceptions gracefully and return an appropriate response
+        return Response({'error': str(e)}, status=500)
+
+
+@@ -1671,17 +1835,36 @@ def update_subscription_user(request,user_id):
+def subscription(request):
+    subscriptions = Subscription.objects.all()
+    empty_form = forms.SubscriptionForm()
+    #subscription_plans = Billing.objects.all()
+    if request.method == 'POST':
+        form = forms.SubscriptionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            start_date = form.cleaned_data['start_date']
+            user = form.cleaned_data['user']
+            plan = form.cleaned_data['plan']
+            print("user:",user,"/",start_date,"/",plan)
+            mo = SubscriptionPlan.objects.filter(id=plan.id).first()
+            mo = int(mo.months)
+            print(mo)
+            # Calculate end_date based on plan duration
+            end_date = start_date + relativedelta(months=mo)#timedelta(days=30)
+            
+            # Create the subscription
+            Subscription.objects.create(
+                user=user,
+                plan=plan,
+                start_date=start_date,
+                end_date=end_date,
+                is_active=form.cleaned_data['is_active']
+            )
+            #form.save()
+            return success_alert_box(request,'New subscription was created successfully','subscription')
+        else:
+            return error_alert_box(form.errors.items(),request,'subscription')
+    elif request.method == "GET":
+        context = {
+            'form' : empty_form,
+            'subscriptions' : subscriptions
+            'subscriptions' : subscriptions,
+        }
+        return render(request,'subscription.html',context) 
+
+
+
+@@ -1900,4 +2083,6 @@ def update_subscription_billing(request,billing_id):
+            form.save()
+            return success_alert_box(request,"The billing information was updated successfully",'subscription_billing')
+        else:
+            return error_alert_box(form.errors.items(),request,'subscription_billing')
+            return error_alert_box(form.errors.items(),request,'subscription_billing')
+        

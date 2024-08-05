@@ -1,0 +1,149 @@
+{% extends "posApp/base.html" %} {% block pageContent %}
+{% load static %}
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="container justify-content-between align-items-center">
+            <div class="row">
+                <h4 class="card-title mb-0">Cash Report</h4>
+            </div>
+            <div class="row py-1">
+                {% if date_from and date_to %}
+                <h5 id="download_subtitle" style="font-variant: small-caps; font-weight: lighter; color: rgba(0, 0, 0, 0.5);">From {{date_from}} to {{date_to}}</h6>
+                {% elif date_from %}
+                <h5 id="download_subtitle" style="font-variant: small-caps; font-weight: lighter; color: rgba(0, 0, 0, 0.5);">From {{date_from}}</h6>
+                {%endif%}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card py-2">
+        <div class="d-flex justify-content-between align-items-center" style="width:auto">
+            <form action="" id="sales-report-date-form" method="post">
+                <div class="row">
+                    <div class="form-group mx-3">
+                        <label for="date_from" class="control-label">Date From</label>
+                        <input class="form-control form-control-sm rounded-0" id="date_from" name="date_from" type="date" value="{{date_from}}">
+                    </div>
+                    <div class="form-group mx-3">
+                        <label for="date_to" class="control-label">Date To</label>
+                        <input class="form-control form-control-sm rounded-0" id="date_to" name="date_to" type="date" value="{{date_to}}">
+                    </div>
+                </div>
+            </form>
+            <div class="text-start" style="align-self: flex-end">
+                <button class="btn btn-primary bg-gradient btn-sm rounded-0" id="date_filter"><i class="mdi mdi-filter"></i><span>Filter Date</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mdc-layout-grid__cell stretch-card mdc-layout-grid__cell--span-12">
+    <div class="mdc-card">
+        <div class="table-responsive">
+            {{itemlist|safe}}
+        </div>
+        <div class="text-start" style="align-self: flex-end">
+            <button class="btn btn-primary bg-gradient btn-md rounded-0 py-10" id="download_sales_report_as_pdf"><i class="mdi mdi-download"></i><span> Download as PDF</span></button>
+        </div>
+        <div class="text-start" style="align-self: flex-end">
+            <button class="btn btn-primary bg-gradient btn-md rounded-0 py-" id="download_sales_report_as_sheet"><i class="mdi mdi-download"></i><span> Download as Sheet</span></button>
+        </div>
+    </div>
+</div>
+<script>inverse_table("cash_report_table")</script>
+{% endblock pageContent %}
+
+{% block ScriptBlock %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/jspdf-autotable@3.5.22/dist/jspdf.plugin.autotable.js"></script>
+<script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+<script src="{% static 'posApp/assets/default/js/tableToCsv.js'%}"></script>
+
+<script>
+        $(function() {
+
+            let filename = "CH{{current_date_time}}".replaceAll(".","")
+            //doc.fromHTML(source, 15, 15, {'width:':180});
+            console.log(filename)
+
+            $('#download_sales_report_as_pdf').click(function() {
+
+                let source = document.getElementsByName("cash_report_table")[0];
+                let source_id = "#"+source.id;
+
+                let jsPdf = new jsPDF();
+
+
+                console.log(source_id);
+
+                jsPdf.autoTable({html:source_id})
+                jsPdf.save(filename+".pdf");
+                //doc.save('Test.pdf');
+            })
+            $('#download_sales_report_as_sheet').click(function() {
+
+                let source = document.getElementsByName("cash_report_table")[0];
+                let source_id = source.id;
+
+
+                //HelloWorldTest();
+
+                // Quick and simple export target #table_id into a csv
+
+                // Select rows from table_id
+                let rows = document.querySelectorAll('table#' + source_id + ' tr');
+                // Construct csv
+                let csv = [];
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [], cols = rows[i].querySelectorAll('td, th');
+                    for (let j = 0; j < cols.length; j++) {
+                        // Clean innertext to remove multiple spaces and jumpline (break csv)
+                        let data = cols[j].innerText.replace(/(\r\n|\n|\r|,)/gm, '').replace(/(\s\s)/gm, ' ')
+                        // Escape double-quote with double-double-quote (see https://stackoverflow.com/questions/17808511/properly-escape-a-double-quote-in-csv)
+                        data = data.replace(/"/g, '""');
+                        // Push escaped string
+                        row.push('"' + data + '"');
+                    }
+                    csv.push(row.join(","));
+                }
+                let csv_string = csv.join('\n');
+                // Download it
+                let link = document.createElement('a');
+                link.style.display = 'none';
+                link.setAttribute('target', '_blank');
+                link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv_string));
+                link.setAttribute('download', filename+'.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+
+            })
+            $('#date_filter').click(function(){
+
+                let date_from_value = document.getElementsByName('date_from')[0].value
+                let date_to_value = document.getElementsByName('date_to')[0].value
+
+                let date_from_date = new Date(date_from_value)
+                let date_to_date = new Date(date_to_value)
+
+                if(date_from_value != "" && date_to_value != ""){
+                    //This feels like a spaghetti solution but it works for now?
+                    window.location.href = "{% url 'cash_report_date_from_date_to' date_from='tmp' date_to='tmp2'%}".replace('tmp', date_from_value).replace('tmp2',date_to_value)
+                }
+                else if(date_from_value != "" && date_to_value == ""){
+                    window.location.href = "{% url 'cash_report_date_from' date_from='tmp' %}".replace('tmp', date_from_value)
+                }
+                else if(date_from_value == "" && date_to_value != ""){
+                    window.location.href = "{% url 'cash_report_date_from' date_from='tmp' %}".replace('tmp', date_to_value)
+                }
+                else{
+                    window.location.href = "{% url 'cash_report' %}"
+                }
+
+            })
+        });
+</script>
+{% endblock ScriptBlock %}
